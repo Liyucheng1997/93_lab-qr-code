@@ -3,45 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>扫码统计 — Smart QR Manager</title>
+  <title>扫码统计 · Smart QR Manager</title>
   <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .chart-box { position: relative; height: 240px; }
+    .chart-box canvas { width: 100% !important; height: 100% !important; }
+  </style>
 </head>
 <body>
   <header class="nav" id="nav"></header>
 
   <div class="container">
-    <a href="#" id="back" class="muted" style="font-size:14px">← 返回详情</a>
-    <h1 class="page-title" style="margin-top:14px" id="title">扫码统计</h1>
+    <a href="#" id="back" class="back"><span data-icon="chevron-left"></span>详情</a>
+    <div class="page-head">
+      <h1 class="page-title" id="title">扫码统计</h1>
+      <p class="page-sub" id="sub">扫码次数、趋势与设备分布</p>
+    </div>
     <div class="msg" id="msg"></div>
 
-    <div id="content" style="display:none">
-      <div class="grid grid-3">
-        <div class="card"><div class="stat-num" id="total">0</div><div class="stat-label">累计扫码次数</div></div>
+    <div id="content" hidden>
+      <div class="grid grid-3 stat-grid">
+        <div class="card"><div class="stat-num" id="total">0</div><div class="stat-label">累计扫码</div></div>
         <div class="card"><div class="stat-num" id="today">0</div><div class="stat-label">今日扫码</div></div>
-        <div class="card"><div class="stat-num" id="last" style="font-size:15px;font-weight:600">—</div><div class="stat-label">最近一次扫码</div></div>
+        <div class="card"><div class="stat-num sm" id="last">—</div><div class="stat-label">最近一次扫码</div></div>
       </div>
 
-      <div class="grid grid-2" style="margin-top:16px; align-items:start">
+      <div class="grid grid-2 mt-2" style="align-items: start">
         <div class="card">
-          <h3 style="margin-top:0">最近 14 天趋势</h3>
-          <canvas id="trendChart" height="220"></canvas>
+          <h3 class="card-title">最近 14 天</h3>
+          <div class="chart-box"><canvas id="trendChart"></canvas></div>
         </div>
         <div class="card">
-          <h3 style="margin-top:0">设备类型分布</h3>
-          <canvas id="deviceChart" height="220"></canvas>
-          <div class="muted" id="deviceEmpty" style="text-align:center; padding:30px 0; display:none">
-            暂无扫码数据
-          </div>
+          <h3 class="card-title">设备类型</h3>
+          <div class="chart-box"><canvas id="deviceChart"></canvas></div>
+          <div class="muted center small" id="deviceEmpty" hidden style="padding: 40px 0">暂无扫码数据</div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <footer id="footer"></footer>
+
+  <script src="/vendor/chart.umd.js"></script>
   <script src="/app.js"></script>
   <script>
     (async () => {
-      await renderNav();
+      await renderNav('dashboard');
       if (!(await requireAuth())) return;
       const id = qs('id');
       const msg = document.getElementById('msg');
@@ -52,28 +59,48 @@
       try { s = await api('/api/qrcodes/' + id + '/stats'); }
       catch (err) { showMsg(msg, err.message, 'err'); return; }
 
-      document.getElementById('content').style.display = '';
-      document.getElementById('title').textContent = '扫码统计 · ' + s.title;
-      document.getElementById('total').textContent = s.total;
-      document.getElementById('today').textContent = s.today;
+      document.getElementById('content').hidden = false;
+      document.getElementById('title').textContent = s.title;
+      document.title = s.title + ' · 扫码统计';
+      document.getElementById('total').textContent = fmtNum(s.total);
+      document.getElementById('today').textContent = fmtNum(s.today);
       document.getElementById('last').textContent = fmtDate(s.lastScan);
 
+      Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+      Chart.defaults.font.size = 12;
+      Chart.defaults.color = '#86868b';
+
       // Trend line
-      new Chart(document.getElementById('trendChart'), {
+      const tc = document.getElementById('trendChart');
+      const g = tc.getContext('2d').createLinearGradient(0, 0, 0, 240);
+      g.addColorStop(0, 'rgba(0,113,227,0.22)');
+      g.addColorStop(1, 'rgba(0,113,227,0)');
+      new Chart(tc, {
         type: 'line',
         data: {
           labels: s.trend.map((t) => t.date.slice(5)),
           datasets: [{
             label: '扫码次数',
             data: s.trend.map((t) => t.count),
-            borderColor: '#4f46e5',
-            backgroundColor: 'rgba(79,70,229,0.12)',
-            fill: true, tension: 0.3, pointRadius: 3,
+            borderColor: '#0071e3',
+            borderWidth: 2,
+            backgroundColor: g,
+            fill: true, tension: 0.4,
+            pointRadius: 0, pointHoverRadius: 5,
+            pointHoverBackgroundColor: '#0071e3', pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2,
           }],
         },
         options: {
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: '#1d1d1f', padding: 10, cornerRadius: 8, displayColors: false },
+          },
+          scales: {
+            x: { grid: { display: false }, border: { display: false } },
+            y: { beginAtZero: true, ticks: { precision: 0, maxTicksLimit: 5 }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } },
+          },
         },
       });
 
@@ -81,8 +108,8 @@
       const dv = s.devices;
       const dvTotal = dv.mobile + dv.tablet + dv.desktop;
       if (dvTotal === 0) {
-        document.getElementById('deviceChart').style.display = 'none';
-        document.getElementById('deviceEmpty').style.display = 'block';
+        document.getElementById('deviceChart').parentElement.hidden = true;
+        document.getElementById('deviceEmpty').hidden = false;
       } else {
         new Chart(document.getElementById('deviceChart'), {
           type: 'doughnut',
@@ -90,10 +117,18 @@
             labels: ['手机', '平板', '电脑'],
             datasets: [{
               data: [dv.mobile, dv.tablet, dv.desktop],
-              backgroundColor: ['#4f46e5', '#818cf8', '#c7d2fe'],
+              backgroundColor: ['#0071e3', '#5ac8fa', '#d2d2d7'],
+              borderWidth: 0, hoverOffset: 6,
             }],
           },
-          options: { plugins: { legend: { position: 'bottom' } } },
+          options: {
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+              legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18 } },
+              tooltip: { backgroundColor: '#1d1d1f', padding: 10, cornerRadius: 8 },
+            },
+          },
         });
       }
     })();

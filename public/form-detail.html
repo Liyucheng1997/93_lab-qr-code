@@ -3,63 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>表单二维码 — Smart QR Manager</title>
+  <title>表单二维码 · Smart QR Manager</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="nav" id="nav"></header>
 
   <div class="container">
-    <a href="/forms.html" class="muted" style="font-size:14px">← 返回表单列表</a>
-    <div class="msg" id="msg" style="margin-top:14px"></div>
+    <a href="/forms.html" class="back"><span data-icon="chevron-left"></span>表单</a>
+    <div class="msg" id="msg"></div>
 
-    <div class="grid grid-2" id="content" style="margin-top:14px; align-items:start; display:none">
-      <div class="card qr-preview">
-        <canvas id="qrCanvas" width="512" height="512" style="width:240px; height:240px"></canvas>
-        <a class="btn" id="download" download="form-qr.png">下载二维码 PNG</a>
+    <div class="detail-grid" id="content" hidden>
+      <div class="card qr-card">
+        <div class="qr-frame"><canvas id="qrCanvas" width="512" height="512" style="width: 248px; height: 248px"></canvas></div>
+        <a class="btn" id="download" download="form-qr.png"><span data-icon="download"></span>下载 PNG</a>
 
-        <div style="width:100%; border-top:1px solid var(--line); margin-top:8px; padding-top:14px">
-          <label style="margin-top:0">中心 Logo（可选）</label>
-          <p class="muted" style="font-size:12px; margin:0 0 10px">
-            上传一张图片叠加到二维码中心。已启用高纠错，正常仍可扫描。
-          </p>
-          <div class="row" style="gap:10px">
-            <input type="file" id="logoFile" accept="image/*" style="font-size:13px" />
-            <button class="btn ghost sm" id="removeLogo" style="display:none">移除</button>
+        <div style="width: 100%">
+          <div class="divider" style="margin: 6px 0 18px"></div>
+          <label style="margin-bottom: 4px">中心 Logo（可选）</label>
+          <p class="help" style="margin: 0 0 12px">叠加一张图片到二维码中心。已启用高纠错等级，仍可正常扫描。</p>
+          <div class="row wrap">
+            <input type="file" id="logoFile" accept="image/*" class="file-hidden" />
+            <label for="logoFile" class="btn ghost sm" style="margin: 0; color: var(--ink); font-weight: 500"><span data-icon="image"></span>上传图片</label>
+            <button class="btn ghost sm" id="removeLogo" hidden><span data-icon="close"></span>移除</button>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <h1 class="page-title" id="title" style="margin-bottom:6px"></h1>
-        <p class="muted" id="desc" style="margin-top:0"></p>
-
-        <label>表单链接（二维码内容）</label>
-        <div class="row" style="gap:8px">
-          <input id="formUrl" readonly />
-          <button class="btn ghost sm" id="copyBtn">复制</button>
+        <div class="page-head" style="margin-bottom: 22px">
+          <h1 class="page-title" id="title"></h1>
+          <p class="page-sub" id="desc"></p>
         </div>
-        <a id="openForm" target="_blank" class="muted" style="font-size:13px; display:inline-block; margin-top:8px">在新标签预览填写页 →</a>
 
-        <div class="grid grid-2" style="margin-top:22px">
+        <div class="field">
+          <label>表单链接（二维码内容）</label>
+          <div class="copy-field">
+            <input id="formUrl" readonly />
+            <button class="btn ghost sm" id="copyBtn"><span data-icon="copy"></span>复制</button>
+          </div>
+          <a id="openForm" target="_blank" rel="noopener" class="link more small" style="margin-top: 10px">在新标签预览填写页</a>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="stat-pair">
           <div>
             <div class="stat-num" id="subCount">0</div>
-            <div class="stat-label">已收集份数</div>
+            <div class="stat-label">已收集</div>
           </div>
           <div>
-            <div class="stat-num" id="fieldCount" style="font-size:18px; font-weight:700"></div>
-            <div class="stat-label">字段数</div>
+            <div class="stat-num" id="fieldCount">0</div>
+            <div class="stat-label">字段</div>
           </div>
         </div>
 
-        <div class="row" style="gap:10px; margin-top:24px">
-          <a class="btn" id="subLink">查看收集结果</a>
-          <a class="btn ghost" id="editLink">编辑字段</a>
-          <button class="btn danger" id="deleteBtn">删除</button>
+        <div class="row wrap mt-4">
+          <a class="btn" id="subLink"><span data-icon="inbox"></span>收集结果</a>
+          <a class="btn ghost" id="editLink"><span data-icon="edit"></span>编辑</a>
+          <button class="btn danger" id="deleteBtn"><span data-icon="trash"></span>删除</button>
         </div>
       </div>
     </div>
   </div>
+
+  <footer id="footer"></footer>
 
   <script src="/app.js"></script>
   <script>
@@ -96,7 +104,7 @@
     let logoImg = null;
     function setLogo(dataUrl) {
       form.logo = dataUrl || null;
-      document.getElementById('removeLogo').style.display = dataUrl ? '' : 'none';
+      document.getElementById('removeLogo').hidden = !dataUrl;
       if (dataUrl) {
         logoImg = new Image();
         logoImg.onload = draw;
@@ -136,12 +144,14 @@
         form = await api('/api/forms/' + id);
       } catch (err) { showMsg(msg, err.message, 'err'); return; }
 
-      document.getElementById('content').style.display = '';
+      document.getElementById('content').hidden = false;
       document.getElementById('title').textContent = form.title;
-      document.getElementById('desc').textContent = form.description || '';
+      document.title = form.title + ' · Smart QR Manager';
+      const desc = document.getElementById('desc');
+      if (form.description) desc.textContent = form.description; else desc.hidden = true;
       document.getElementById('formUrl').value = form.formUrl;
       document.getElementById('openForm').href = form.formUrl;
-      document.getElementById('subCount').textContent = form.submissionCount || 0;
+      document.getElementById('subCount').textContent = fmtNum(form.submissionCount || 0);
       document.getElementById('fieldCount').textContent = (form.fields || []).length;
       document.getElementById('subLink').href = '/form-submissions.html?id=' + id;
       document.getElementById('editLink').href = '/form-builder.html?id=' + id;
@@ -164,6 +174,7 @@
           setLogo(dataUrl);
           showMsg(msg, 'Logo 已保存', 'ok');
         } catch (err) { showMsg(msg, err.message || 'Logo 处理失败', 'err'); }
+        e.target.value = '';
       });
       document.getElementById('removeLogo').addEventListener('click', async () => {
         await api('/api/forms/' + id, { method: 'PUT', body: JSON.stringify({ logo: null }) });

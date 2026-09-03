@@ -3,35 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>登录 — Smart QR Manager</title>
+  <title>登录 · Smart QR Manager</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="nav" id="nav"></header>
 
-  <div class="container narrow">
+  <div class="container narrow-sm">
+    <div class="auth-head">
+      <div class="auth-logo"><span data-icon="logo" data-size="28"></span></div>
+      <h1 class="page-title" id="formTitle">登录</h1>
+      <p class="page-sub" id="formSub">使用邮箱登录你的账户</p>
+    </div>
+
     <div class="card">
-      <div class="row spread">
-        <h1 class="page-title" id="formTitle">登录</h1>
-        <a href="#" id="toggleMode" class="muted" style="font-size:14px">没有账号？注册 →</a>
+      <div class="segmented" id="seg">
+        <button type="button" class="on" data-mode="login">登录</button>
+        <button type="button" data-mode="register">注册</button>
       </div>
 
       <div class="msg" id="msg"></div>
 
-      <div id="nameField" style="display:none">
+      <div class="field" id="nameField" hidden>
         <label for="name">昵称（可选）</label>
         <input id="name" placeholder="你的名字" autocomplete="nickname" />
       </div>
 
-      <label for="email">邮箱</label>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+      <div class="field">
+        <label for="email">邮箱</label>
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+      </div>
 
-      <label for="password">密码</label>
-      <input id="password" type="password" placeholder="至少 6 位" autocomplete="current-password" />
+      <div class="field">
+        <label for="password">密码</label>
+        <input id="password" type="password" placeholder="至少 6 位" autocomplete="current-password" />
+      </div>
 
-      <button class="btn block" id="submitBtn" style="margin-top:20px">登录</button>
+      <button class="btn block mt-3" id="submitBtn">登录</button>
     </div>
   </div>
+
+  <footer id="footer"></footer>
 
   <script src="/app.js"></script>
   <script>
@@ -40,19 +52,21 @@
     const msg = document.getElementById('msg');
     const nameField = document.getElementById('nameField');
     const formTitle = document.getElementById('formTitle');
+    const formSub = document.getElementById('formSub');
     const submitBtn = document.getElementById('submitBtn');
-    const toggle = document.getElementById('toggleMode');
+    const seg = document.getElementById('seg');
 
-    toggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      mode = mode === 'login' ? 'register' : 'login';
+    seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.mode;
       const isReg = mode === 'register';
-      formTitle.textContent = isReg ? '注册' : '登录';
-      submitBtn.textContent = isReg ? '创建账号' : '登录';
-      nameField.style.display = isReg ? 'block' : 'none';
-      toggle.textContent = isReg ? '已有账号？登录 →' : '没有账号？注册 →';
-      msg.className = 'msg';
-    });
+      seg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+      formTitle.textContent = isReg ? '创建账户' : '登录';
+      formSub.textContent = isReg ? '只需一个邮箱，免费开始' : '使用邮箱登录你的账户';
+      submitBtn.textContent = isReg ? '创建账户' : '登录';
+      nameField.hidden = !isReg;
+      document.getElementById('password').autocomplete = isReg ? 'new-password' : 'current-password';
+      hideMsg(msg);
+    }));
 
     async function submit() {
       const email = document.getElementById('email').value.trim();

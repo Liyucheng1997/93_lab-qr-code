@@ -3,27 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>收集结果 — Smart QR Manager</title>
+  <title>收集结果 · Smart QR Manager</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="nav" id="nav"></header>
 
   <div class="container">
-    <a href="#" id="back" class="muted" style="font-size:14px">← 返回表单二维码</a>
-    <div class="row spread" style="margin-top:14px">
+    <a href="#" id="back" class="back"><span data-icon="chevron-left"></span>表单二维码</a>
+    <div class="page-head split">
       <div>
         <h1 class="page-title" id="title">收集结果</h1>
         <p class="page-sub" id="sub">谁提交了，以及他们填写的信息</p>
       </div>
-      <a class="btn ghost" id="exportBtn">导出 CSV</a>
+      <a class="btn ghost" id="exportBtn" href="#"><span data-icon="download"></span>导出 CSV</a>
     </div>
 
     <div class="msg" id="msg"></div>
-    <div class="card table-wrap" id="tableCard" style="display:none">
-      <table id="table"></table>
+    <div class="card flush" id="tableCard" hidden>
+      <div class="table-wrap"><table id="table"></table></div>
     </div>
   </div>
+
+  <footer id="footer"></footer>
 
   <script src="/app.js"></script>
   <script>
@@ -33,7 +35,6 @@
       const id = qs('id');
       const msg = document.getElementById('msg');
       document.getElementById('back').href = '/form-detail.html?id=' + id;
-      document.getElementById('exportBtn').href = '#';
       if (!id) { showMsg(msg, '缺少表单 ID', 'err'); return; }
 
       let res;
@@ -41,16 +42,15 @@
       catch (err) { showMsg(msg, err.message, 'err'); return; }
 
       const { form, submissions } = res;
-      document.getElementById('title').textContent = '收集结果 · ' + form.title;
+      document.getElementById('title').textContent = form.title;
+      document.title = form.title + ' · 收集结果';
       document.getElementById('sub').textContent = `共 ${submissions.length} 份提交`;
-      document.getElementById('exportBtn').addEventListener('click', () => {
-        location.href = '/api/forms/' + id + '/export';
-      });
+      document.getElementById('exportBtn').href = '/api/forms/' + id + '/export';
 
+      const card = document.getElementById('tableCard');
       if (!submissions.length) {
-        document.getElementById('tableCard').style.display = 'block';
-        document.getElementById('table').innerHTML =
-          '<tbody><tr><td class="muted">还没有人提交，分享二维码后这里会显示填写记录。</td></tr></tbody>';
+        card.hidden = false;
+        card.innerHTML = emptyState('inbox', '还没有人提交', '分享二维码后，这里会显示填写记录。');
         return;
       }
 
@@ -60,12 +60,12 @@
         '</tr></thead>';
       const body = '<tbody>' + submissions.map((s, i) => `
         <tr>
-          <td>${i + 1}</td>
-          <td>${fmtDate(s.at)}</td>
+          <td class="num">${i + 1}</td>
+          <td class="num">${fmtDate(s.at)}</td>
           ${form.fields.map((f) => `<td class="wrap">${escapeHtml(cell(s.data[f.id]))}</td>`).join('')}
         </tr>`).join('') + '</tbody>';
       document.getElementById('table').innerHTML = head + body;
-      document.getElementById('tableCard').style.display = 'block';
+      card.hidden = false;
     })();
   </script>
 </body>

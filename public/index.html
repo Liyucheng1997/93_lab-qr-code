@@ -3,56 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart QR Manager — 智能二维码管理</title>
+  <title>Smart QR Manager · 可管理的二维码</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="nav" id="nav"></header>
 
   <section class="hero">
-    <h1>让每一个二维码<br /><span class="grad">都可被追踪与管理</span></h1>
-    <p>Smart QR Manager 帮你生成二维码、统一管理、随时修改跳转链接，并实时统计扫码次数、日期趋势与设备类型。</p>
+    <div class="eyebrow">Smart QR Manager</div>
+    <h1>一个二维码，<br />随时可改。</h1>
+    <p>生成、管理、追踪，都在一处。印好的码也能换跳转，每一次扫码都看得见。</p>
     <div class="hero-cta">
-      <a class="btn" href="/login.html">免费开始 →</a>
-      <a class="btn ghost" href="#quick">快速生成二维码</a>
+      <a class="btn lg" href="/login.html">免费开始</a>
+      <a class="link more" href="#quick">先试试快速生成</a>
     </div>
   </section>
 
-  <div class="container">
-    <div class="grid grid-3">
-      <div class="card">
-        <span class="tag">动态链接</span>
-        <h3>随时改跳转</h3>
-        <p class="muted">二维码印好后也能修改目标链接，无需重新打印。</p>
+  <div class="container" style="padding-top: 0">
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon tint-blue"><span data-icon="link" data-size="24"></span></div>
+        <h3>链接可改，<br />无需重印。</h3>
+        <p>二维码印在海报、名片或包装上之后，仍能随时更换跳转地址。已发出去的码，一直有效。</p>
       </div>
-      <div class="card">
-        <span class="tag">扫码统计</span>
-        <h3>看清每次扫描</h3>
-        <p class="muted">记录扫码次数、按天的趋势曲线和访客设备类型。</p>
+      <div class="feature">
+        <div class="feature-icon tint-green"><span data-icon="chart" data-size="24"></span></div>
+        <h3>每次扫码，<br />尽在掌握。</h3>
+        <p>记录扫码次数、最近 14 天趋势，以及来自手机、平板或电脑的比例。</p>
       </div>
-      <div class="card">
-        <span class="tag">集中管理</span>
-        <h3>一个控制台</h3>
-        <p class="muted">所有二维码集中在控制台，创建、查看、编辑一目了然。</p>
+      <div class="feature">
+        <div class="feature-icon tint-purple"><span data-icon="form" data-size="24"></span></div>
+        <h3>表单收集，<br />扫码即填。</h3>
+        <p>自定义字段生成表单二维码。报名、登记、问卷，一扫完成，结果可导出为 CSV。</p>
       </div>
     </div>
 
-    <div class="card" id="quick" style="margin-top:28px">
-      <h2 style="margin-top:0">快速生成二维码</h2>
-      <p class="muted">输入任意链接或文本，立即生成（此处为静态二维码，登录后可创建可统计的动态二维码）。</p>
-      <div class="grid grid-2" style="align-items:start">
-        <div>
-          <label for="quickInput">链接或文本</label>
-          <input id="quickInput" placeholder="https://example.com" value="https://anthropic.com" />
-          <button class="btn block" id="quickBtn" style="margin-top:14px">生成二维码</button>
-        </div>
-        <div class="qr-preview">
-          <img id="quickImg" width="220" height="220" alt="二维码预览" />
-          <a class="btn ghost sm" id="quickDownload" href="#" download="qrcode.png">下载 PNG</a>
+    <section class="tile-dark" id="quick">
+      <div>
+        <h2>快速生成二维码。</h2>
+        <p>输入链接或文字，立即得到一张可下载的静态二维码。登录后可创建可追踪、可修改的动态二维码。</p>
+        <label for="quickInput">链接或文本</label>
+        <input id="quickInput" placeholder="https://example.com" value="https://anthropic.com" autocomplete="off" />
+        <div class="row mt-2">
+          <button class="btn" id="quickBtn">生成</button>
+          <a class="btn ghost" id="quickDownload" href="#" download="qrcode.png"><span data-icon="download"></span>下载 PNG</a>
         </div>
       </div>
-    </div>
+      <div class="qr-stage">
+        <img id="quickImg" width="220" height="220" alt="二维码预览" />
+      </div>
+    </section>
   </div>
+
+  <footer id="footer"></footer>
 
   <script src="/app.js"></script>
   <script>
@@ -60,6 +63,7 @@
     const input = document.getElementById('quickInput');
     const img = document.getElementById('quickImg');
     const dl = document.getElementById('quickDownload');
+    let timer = null;
     function gen() {
       const text = input.value.trim();
       if (!text) return;
@@ -69,6 +73,7 @@
     }
     document.getElementById('quickBtn').addEventListener('click', gen);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') gen(); });
+    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(gen, 450); });
     gen();
   </script>
 </body>

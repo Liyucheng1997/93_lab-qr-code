@@ -68,7 +68,7 @@ npm start          # 访问 http://localhost:3000
 | 表单二维码 | `/form-detail.html?id=` | 二维码 + Logo 上传 |
 | 收集结果 | `/form-submissions.html?id=` | 提交记录 + CSV 导出 |
 | 填写页（公开） | `/f/:id` | 扫码者填写 |
-| 我的信息 | `/profile.html` | 账号信息 + 全部项目 |
+| 我的 | `/profile.html` | 账户信息 + 全部项目 |
 
 ## API 速览
 - 认证：`POST /api/auth/register|login|logout` · `GET /api/auth/me` · `GET /api/profile`

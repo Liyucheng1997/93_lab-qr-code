@@ -3,41 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>编辑二维码 — Smart QR Manager</title>
+  <title>编辑二维码 · Smart QR Manager</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="nav" id="nav"></header>
 
   <div class="container narrow">
-    <a href="#" id="back" class="muted" style="font-size:14px">← 返回详情</a>
-    <h1 class="page-title" style="margin-top:14px">编辑二维码</h1>
-    <p class="page-sub">修改标题或跳转链接（二维码图案不变，已印刷的码依然有效）</p>
+    <a href="#" id="back" class="back"><span data-icon="chevron-left"></span>详情</a>
+    <div class="page-head">
+      <h1 class="page-title">编辑二维码</h1>
+      <p class="page-sub">修改标题或跳转链接。二维码图案不变，已印刷的码依然有效。</p>
+    </div>
 
     <div class="card">
       <div class="msg" id="msg"></div>
 
-      <label for="title">标题</label>
-      <input id="title" />
+      <div class="field">
+        <label for="title">标题</label>
+        <input id="title" />
+      </div>
 
-      <label for="target">目标链接</label>
-      <input id="target" />
-      <p class="muted" style="font-size:12px; margin:6px 0 0">
-        保存后，所有扫码将立即跳转到新链接。
-      </p>
+      <div class="field">
+        <label for="target">目标链接</label>
+        <input id="target" inputmode="url" />
+        <p class="help">保存后，所有扫码将立即跳转到新链接。</p>
+      </div>
 
-      <button class="btn block" id="saveBtn" style="margin-top:20px">保存修改</button>
+      <button class="btn block mt-3" id="saveBtn">保存</button>
+      <a class="center-link" id="cancel" href="#">取消</a>
     </div>
   </div>
+
+  <footer id="footer"></footer>
 
   <script src="/app.js"></script>
   <script>
     (async () => {
-      await renderNav();
+      await renderNav('dashboard');
       if (!(await requireAuth())) return;
       const id = qs('id');
       const msg = document.getElementById('msg');
       document.getElementById('back').href = '/detail.html?id=' + id;
+      document.getElementById('cancel').href = '/detail.html?id=' + id;
       if (!id) { showMsg(msg, '缺少二维码 ID', 'err'); return; }
       try {
         const q = await api('/api/qrcodes/' + id);
@@ -56,8 +64,8 @@
             method: 'PUT',
             body: JSON.stringify({ title, target }),
           });
-          showMsg(msg, '已保存，正在返回详情…', 'ok');
-          setTimeout(() => (location.href = '/detail.html?id=' + id), 700);
+          showMsg(msg, '已保存，正在返回详情', 'ok');
+          setTimeout(() => (location.href = '/detail.html?id=' + id), 600);
         } catch (err) {
           showMsg(msg, err.message, 'err');
           btn.disabled = false;

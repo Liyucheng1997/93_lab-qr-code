@@ -3,24 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>表单 — Smart QR Manager</title>
+  <title>表单 · Smart QR Manager</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="nav" id="nav"></header>
 
   <div class="container">
-    <div class="row spread">
+    <div class="page-head split">
       <div>
-        <h1 class="page-title">收集表单</h1>
-        <p class="page-sub">自定义要收集的信息，生成二维码，扫码即可填写并统计</p>
+        <h1 class="page-title">表单</h1>
+        <p class="page-sub">自定义要收集的信息，生成二维码，扫码即可填写。</p>
       </div>
-      <a class="btn" id="createBtn" href="/form-builder.html">+ 创建表单</a>
+      <a class="btn" id="createBtn" href="/form-builder.html"><span data-icon="plus"></span>创建表单</a>
     </div>
 
     <div class="msg" id="msg"></div>
-    <div class="grid" id="list"></div>
+    <div id="list"></div>
   </div>
+
+  <footer id="footer"></footer>
 
   <script src="/app.js"></script>
   <script>
@@ -28,34 +30,32 @@
       await renderNav('forms');
       const me = await requireAuth();
       if (!me) return;
-      // 非会员：创建按钮引导到开通页
-      if (!me.isMember) document.getElementById('createBtn').href = '/upgrade.html';
+      const createHref = me.isMember ? '/form-builder.html' : '/upgrade.html';
+      document.getElementById('createBtn').href = createHref;
       const list = document.getElementById('list');
       try {
         const items = await api('/api/forms');
         if (!items.length) {
-          list.innerHTML = `<div class="card empty">
-            还没有表单。<br/><br/>
-            <a class="btn" href="/form-builder.html">+ 创建第一个表单</a>
-          </div>`;
+          list.innerHTML = `<div class="card flush">${emptyState('form', '还没有表单',
+            '设计一份表单并生成二维码，扫码的人填写后会在这里汇总。',
+            `<a class="btn" href="${createHref}">${icon('plus')}创建表单</a>`)}</div>`;
           return;
         }
-        list.innerHTML = items.map((f) => `
-          <div class="qr-item">
-            <img class="qr-thumb" src="/api/forms/${f.id}/image" alt="QR" />
-            <div style="flex:1; min-width:0">
-              <h3>${escapeHtml(f.title)}</h3>
-              <div class="url">${escapeHtml(f.description || '（无描述）')}</div>
-              <div class="muted" style="font-size:12px; margin-top:4px">
-                ${f.fieldCount} 个字段 · 已收集 <strong>${f.submissionCount}</strong> 份 · ${fmtDate(f.createdAt)}
-              </div>
+        list.innerHTML = `<div class="list">` + items.map((f) => `
+          <div class="list-row" data-href="/form-detail.html?id=${f.id}">
+            <img class="list-thumb" src="/api/forms/${f.id}/image" alt="" />
+            <div class="list-main">
+              <h3 class="list-title">${escapeHtml(f.title)}</h3>
+              <div class="list-sub">${escapeHtml(f.description || '无说明')}</div>
+              <div class="list-meta">${f.fieldCount} 个字段 · 创建于 ${fmtDate(f.createdAt)}</div>
             </div>
-            <div class="row">
-              <a class="btn ghost sm" href="/form-detail.html?id=${f.id}">二维码</a>
-              <a class="btn ghost sm" href="/form-submissions.html?id=${f.id}">收集结果</a>
+            <div class="list-stat"><div class="n">${fmtNum(f.submissionCount)}</div><div class="l">份提交</div></div>
+            <div class="list-actions">
+              <a class="btn ghost sm" href="/form-submissions.html?id=${f.id}">结果</a>
               <a class="btn ghost sm" href="/form-builder.html?id=${f.id}">编辑</a>
             </div>
-          </div>`).join('');
+            <span class="list-chevron">${icon('chevron-right')}</span>
+          </div>`).join('') + `</div>`;
       } catch (err) {
         showMsg(document.getElementById('msg'), err.message, 'err');
       }
